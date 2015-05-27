@@ -1,0 +1,11 @@
+[Unit]
+Description=Remote Keypad Driver
+Documentation=http://www.newsdownload.co.uk/pages/RPiKeypadDriver.html
+
+[Service]
+Type=simple
+ExecStart=/root/RemoteKeypadDriver/RemoteKeypad 
+ExecReload=/root/RemoteKeypadDriver/RemoteKeypad 
+ExecStop=/usr/bin/rm /root/RemoteKeypadDriver/running.dat
+
+
