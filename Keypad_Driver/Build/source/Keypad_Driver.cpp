@@ -187,7 +187,7 @@ unsigned int get_key(){
                   delay(180);
                   system("/home/pi/Calculator/Development/Build/Keypad_Kernel_Driver/compile_v01.sh ");
                }
-               if(keyPadBool[0][0] and keyPadBool[9][4] == 1)
+               if(keyPadBool[0][0] and keyPadBool[9][2] == 1)
                {
                   std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 90 . . .\n";
                   delay(180);
@@ -200,12 +200,36 @@ unsigned int get_key(){
                   
                   system("shutdown -r now");
                }
-               if(keyPadBool[0][0] and keyPadBool[9][3] == 1)
+               if(keyPadBool[0][0] and keyPadBool[9][1] == 1)
                {
                   std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 0 . . .\n";
                   char c;
                   int in, out;
                   in = open("/boot/config.txt.tft-0", O_RDONLY);
+                  out = open("/boot/config.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+                  while(read(in,&c,1) == 1)
+                     write(out,&c,1);
+                  system("shutdown -r now");
+               }
+               if(keyPadBool[0][0] and keyPadBool[9][3] == 1)
+               {
+                  std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 90 . . .\n";
+                  delay(180);
+                  char c;
+                  int in, out;
+                  in = open("/boot/config.txt.tft-180", O_RDONLY);
+                  out = open("/boot/config.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+                  while(read(in,&c,1) == 1)
+                     write(out,&c,1);
+                  
+                  system("shutdown -r now");
+               }
+               if(keyPadBool[0][0] and keyPadBool[9][4] == 1)
+               {
+                  std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 0 . . .\n";
+                  char c;
+                  int in, out;
+                  in = open("/boot/config.txt.tft-270", O_RDONLY);
                   out = open("/boot/config.txt", O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
                   while(read(in,&c,1) == 1)
                      write(out,&c,1);
@@ -246,8 +270,8 @@ int main(int argc, char *argv[])
 //    KEY_CODE[0] = "KEY_A";
 //    KEY_CODE[1] = "KEY_B";
    
-   std::cout << "Starting . . .\n";
-   std::cout << "\tSetup uinput . . .\n";
+   //std::cout << "Starting . . .\n";
+   //std::cout << "\tSetup uinput . . .\n";
    int key;
    int                    fd;
    struct uinput_user_dev uidev;
@@ -260,7 +284,7 @@ int main(int argc, char *argv[])
    
    fd=open("/dev/uinput",O_WRONLY);
    //fd=open("/dev/input/uinput",O_WRONLY);
-   strcpy(device.name,"imple_keypad_v03");
+   strcpy(device.name,"keypad_driver_60");
    
    device.id.bustype=BUS_USB;
    device.id.vendor=1;
@@ -302,7 +326,7 @@ int main(int argc, char *argv[])
          fprintf(stderr, "\t\terror create\n");
       }
       
-   std::cout << "\tSetup uinput complete . . .\n";
+   //std::cout << "\tSetup uinput complete . . .\n";
    
    
    key_init();
@@ -312,10 +336,10 @@ int main(int argc, char *argv[])
    for (;;)
    {
       returnKeyPress = get_key();
-      std::cout << "\t\tButton press = " << returnKeyPress << "\n";
+     // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
       
       if (returnKeyPress == 1) {
-         std::cout << "\t\t\tattempting to send to uinput . . .\n";
+        // std::cout << "\t\t\tattempting to send to uinput . . .\n";
 
          send_event(fd, EV_KEY, KEY_A, 1);
          send_event(fd, EV_SYN, SYN_REPORT, 0);
@@ -324,16 +348,16 @@ int main(int argc, char *argv[])
          send_event(fd, EV_SYN, SYN_REPORT, 0);
       }
       if (returnKeyPress == 2) {
-         std::cout << "\t\t\tattempting to send to uinput . . .\n";
+         std::cout << "\t\t\tattempting to send to uinput . . . Button press = " << returnKeyPress << "\n";
          
-         send_event(fd, EV_KEY, KEY_I, 1);
+         send_event(fd, EV_KEY, KEY_B, 1);
          send_event(fd, EV_SYN, SYN_REPORT, 0);
          delay(180);
-         send_event(fd, EV_KEY, KEY_I, 0);
+         send_event(fd, EV_KEY, KEY_B, 0);
          send_event(fd, EV_SYN, SYN_REPORT, 0);
       }
       if (returnKeyPress == 60) {
-         std::cout << "\t\t\tattempting to send to uinput . . .\n";
+        // std::cout << "\t\t\tattempting to send to uinput . . .\n";
          
          send_event(fd, EV_KEY, KEY_ENTER, 1);
          send_event(fd, EV_SYN, SYN_REPORT, 0);
