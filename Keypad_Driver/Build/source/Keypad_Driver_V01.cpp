@@ -49,8 +49,99 @@ exit(EXIT_FAILURE); \
 #define TRUE 1
 #define FALSE 0
 
+#define GND -1
+struct {
+   int pin;
+   int key;
+} *io, // In main() this pointer is set to one of the two tables below.
+   io_0[] = {
+      // This pin/key table is used if an Adafruit PiTFT display
+      // is detected (e.g. Cupcade or PiGRRL).
+      // Input   Output (from /usr/include/linux/input.h)
+      {   1,      KEY_A                 },
+      {   2,      KEY_B                 },
+      {   3,      KEY_C                 },
+      {   4,      KEY_D                 },
+      {   5,      KEY_E                 },
+      {   6,      KEY_F                 },
+      {   7,      KEY_G                 },
+      {   8,      KEY_H                 },
+      {   9,      KEY_I                 },
+      {   10,     KEY_J                 },
+      {   11,     KEY_K                 },
+      {   12,     KEY_L                 },
+      {   13,     KEY_M                 },
+      {   14,     KEY_N                 },
+      {   15,     KEY_O                 },
+      {   16,     KEY_P                 },
+      {   17,     KEY_Q                 },
+      {   18,     KEY_R                 },
+      {   19,     KEY_S                 },
+      {   20,     KEY_T                 },
+      {   21,     KEY_U                 },
+      {   22,     KEY_V                 },
+      {   23,     KEY_W                 },
+      {   24,     KEY_X                 },
+      {   25,     KEY_Y                 },
+      {   26,     KEY_Z                 },
+      {   27,     KEY_0                 },
+      {   28,     KEY_1                 },
+      {   29,     KEY_2                 },
+      {   30,     KEY_3                 },
+      {   31,     KEY_4                 },
+      {   32,     KEY_5                 },
+      {   33,     KEY_6                 },
+      {   34,     KEY_7                 },
+      {   35,     KEY_8                 },
+      {   36,     KEY_9                 },
+      {   37,     KEY_MINUS             },
+      {   38,     KEY_DOT               },
+      {   39,     KEY_BACKSLASH         },
+      {   40,     KEY_SLASH             },
+      {   41,     KEY_CAPSLOCK          },
+      {   42,     KEY_SHIFT             },
+      {   43,     KEY_LEFTCTRL          },
+      {   44,     KEY_LEFTALT           },
+      {   45,     KEY_SPACE             },
+      {   46,     KEY_COMMA             },
+      {   47,     KEY_KPASTERISK        },
+      {   48,     KEY_KPPLUS            },
+      {   49,     KEY_SEMICOLON         },
+      {   50,     KEY_RIGHTCTL          },
+      {   51,     KEY_ESC               },
+      {   52,     KEY_TAB               },
+      {   53,     KEY_DELETE            },
+      {   54,     KEY_APOSTROPHE        },
+      {   55,     KEY_SPACE             },
+      {   56,     KEY_SPACE             },
+      {   57,     KEY_COMMA             },
+      {   58,     KEY_DOT               },
+      {   59,     KEY_BACKSPACE         },
+      {   60,     KEY_ENTER             },
+      {   61,     KEY_DOWN              },
+      {   62,     KEY_LEFT              },
+      {   63,     KEY_RIGHT             },
+      {  -1,     -1           } }, // END OF LIST, DO NOT CHANGE
+   // MAME must be configured with 'z' & 'x' as buttons 1 & 2 -
+   // this was required for the accompanying 'menu' utility to
+   // work (catching crtl/alt w/ncurses gets totally NASTY).
+   // Credit/start are likewise moved to 'r' & 'q,' reason being
+   // to play nicer with certain emulators not liking numbers.
+   // GPIO options are 'maxed out' with PiTFT + above table.
+   // If additional buttons are desired, will need to disable
+   // serial console and/or use P5 header.  Or use keyboard.
+   io_90[] = {
+   }
+      
 unsigned char keyval;	//A variable
-
+char
+   *progName,                         // Program name (for error reporting)
+   //sysfs_root[] = "/sys/class/gpio", // Location of Sysfs GPIO files
+   running      = 1;                 // Signal handler will set to 0 (exit
+const int
+   debounceTime = 20;                // 20 ms for button debouncing
+   
+      
 /*
  * + *---------------------------------------+
  * | Prototype: void key_init(void);       |
@@ -266,70 +357,80 @@ int send_event(int fd, __u16 type, __u16 code, __s32 value)
 
 int main(int argc, char *argv[])
 {
-//    const char *KEY_CODE[2];
-//    KEY_CODE[0] = "KEY_A";
-//    KEY_CODE[1] = "KEY_B";
+	char                   buf[50],      // For sundry filenames
+	                       c,            // Pin input value ('0'/'1')
+	                       board;        // 0=Pi1Rev1, 1=Pi1Rev2, 2=Pi2
+	int                    fd,           // For mmap, sysfs, uinput
+	                       i, j,         // Asst. counter
+	                       bitmask,      // Pullup enable bitmask
+	                       timeout = -1, // poll() timeout
+	                       intstate[32], // Last-read state
+	                       extstate[32], // Debounced state
+	                       lastKey = -1; // Last key down (for repeat)
+	unsigned long          bitMask, bit; // For Vulcan pinch detect
+	volatile unsigned char shortWait;    // Delay counter
+	struct input_event     keyEv, synEv; // uinput events
+	struct pollfd          p[32];        // GPIO file descriptors
+
+	progName = argv[0];             // For error reporting
+	signal(SIGINT , signalHandler); // Trap basic signals (exit cleanly)
+	signal(SIGKILL, signalHandler);
+
+   int                    key;
    
-   //std::cout << "Starting . . .\n";
-   //std::cout << "\tSetup uinput . . .\n";
-   int key;
-   int                    fd;
-   struct uinput_user_dev uidev;
-   struct input_event     ev;
-   int                    dx, dy;
-   int                    i;
+   // Select io[] table for Cupcade (TFT) or 'normal' project.
+   //    io = (access("/etc/modprobe.d/adafruit.conf", F_OK) ||
+   //    access("/dev/fb1", F_OK)) ? ioStandard : ioTFT;
+   io = io_0;
    
-   struct uinput_user_dev device;
-   memset(&device, 0, sizeof device);
+   key_init();
    
-   fd=open("/dev/uinput",O_WRONLY);
-   //fd=open("/dev/input/uinput",O_WRONLY);
-   strcpy(device.name,"keypad_driver_60");
+   // Set up uinput
+   //    struct uinput_user_dev device;
+   //    memset(&device, 0, sizeof device);
    
-   device.id.bustype=BUS_USB;
-   device.id.vendor=1;
-   device.id.product=1;
-   device.id.version=1;
-   
-   for (i=0; i < ABS_MAX; i++) {
-      device.absmax[i] = -1;
-      device.absmin[i] = -1;
-      device.absfuzz[i] = -1;
-      device.absflat[i] = -1;
-   }
-   
-   device.absmin[ABS_X]=0;
-   device.absmax[ABS_X]=255;
-   device.absfuzz[ABS_X]=0;
-   device.absflat[ABS_X]=0;
-   
-   if (write(fd,&device,sizeof(device)) != sizeof(device))
-   {
-      fprintf(stderr, "\t\terror setup\n");
-   }   
-   
-   if (ioctl(fd,UI_SET_EVBIT,EV_KEY) < 0)
-      fprintf(stderr, "\t\terror evbit key\n");
-   
-   if (ioctl(fd,UI_SET_KEYBIT, KEY_A) < 0)
-      fprintf(stderr, "\t\terror evbit key\n");
-   
-   if (ioctl(fd,UI_SET_EVBIT,EV_REL) < 0)
-      fprintf(stderr, "\t\terror evbit rel\n");
-   
-   for(i=REL_X;i<REL_MAX;i++)
-      if (ioctl(fd,UI_SET_RELBIT,i) < 0)
-         fprintf(stderr, "\t\terror setrelbit %d\n", i);
-      
-      if (ioctl(fd,UI_DEV_CREATE) < 0)
-      {
-         fprintf(stderr, "\t\terror create\n");
+   if((fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) < 0)
+      err("Can't open /dev/uinput");
+   if(ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0)
+      err("Can't SET_EVBIT");
+   for(i=0; io[i].pin >= 0; i++) {
+      if(io[i].key != GND) {
+         if(ioctl(fd, UI_SET_KEYBIT, io[i].key) < 0)
+            err("Can't SET_KEYBIT");
       }
-      
+   }
+   struct uinput_user_dev uidev;
+   memset(&uidev, 0, sizeof(uidev));
+   snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "Keypad_Driver");
+   uidev.id.bustype = BUS_USB;
+   uidev.id.vendor  = 0x1;
+   uidev.id.product = 0x1;
+   uidev.id.version = 1;
+   if(write(fd, &uidev, sizeof(uidev)) < 0)
+      err("write failed");
+   if(ioctl(fd, UI_DEV_CREATE) < 0)
+      err("DEV_CREATE failed");
+         
+   // Initialize input event structures
+   memset(&keyEv, 0, sizeof(keyEv));
+   keyEv.type  = EV_KEY;
+   memset(&synEv, 0, sizeof(synEv));
+   synEv.type  = EV_SYN;
+   synEv.code  = SYN_REPORT;
+   synEv.value = 0;
+   
+   // 'fd' is now open file descriptor for issuing uinput events
+   
+   
+   // ----------------------------------------------------------------
+   // Monitor GPIO file descriptors for button events.  The poll()
+   // function watches for GPIO IRQs in this case; it is NOT
+   // continually polling the pins!  Processor load is near zero.
+   
+   
    //std::cout << "\tSetup uinput complete . . .\n";
    
    
-   key_init();
    
    int returnKeyPress = 0;
    
