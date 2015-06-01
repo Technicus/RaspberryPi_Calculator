@@ -115,7 +115,8 @@ io_0[] = {
    {   56,     KEY_COMMA             },
    {   57,     KEY_DOT               },
    {   58,     KEY_BACKSPACE         },   
-   {   59,     KEY_BACKSPACE         } },   
+   {   59,     KEY_BACKSPACE         }, 
+   {   -1,     -1                    } },   
    
 io_90[] = {
    // This button/key table is used if the orientation is landscape
@@ -389,7 +390,7 @@ unsigned int get_key(){
                if(keyPadBool[0][0] and keyPadBool[0][1] == 1)
                {
                   //std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 270 . . .\n";
-                  std::cout << "\tKeypad_Driver_V02 -- check 04, 12:48; debounce test.\n";
+                  std::cout << "\tKeypad_Driver_V03 -- check 01, 14:37; compile test.\n";
                }
                
             }
@@ -467,12 +468,14 @@ int main(int argc, char *argv[])
 	}
 	
 	struct uinput_user_dev uidev;
+   
 	memset(&uidev, 0, sizeof(uidev));
    snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "Keypad_Driver");
 	uidev.id.bustype = BUS_USB;
 	uidev.id.vendor  = 0x1;
 	uidev.id.product = 0x1;
 	uidev.id.version = 1;
+   
 	if(write(fd, &uidev, sizeof(uidev)) < 0)
 		err("write failed");
 	if(ioctl(fd, UI_DEV_CREATE) < 0)
@@ -492,25 +495,79 @@ int main(int argc, char *argv[])
    {
       returnKeyPress_00 = get_key();
       
-
-      
       // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
       
-      keyEv.code  = io[returnKeyPress_01].key;
+      keyEv.code  = io[returnKeyPress_00].key;
 
       keyEv.value = 1;
 
-      write(fd, &keyEv,
-         sizeof(keyEv));
+      write(fd, &keyEv, sizeof(keyEv));
       
       delay(180);
       
       keyEv.value = 0;
 
-      write(fd, &keyEv,
-         sizeof(keyEv));
+      write(fd, &keyEv, sizeof(keyEv));
    }
    
    return 0;
    
 }
+
+/*
+while(running) { 
+   // Signal handler can set this to 0 to exit
+   // Wait for IRQ on pin (or timeout for button debounce)
+   if(poll(p, j, timeout) > 0) { // If IRQ...
+      for(i=0; i<j; i++) {       // Scan non-GND pins...
+         if(p[i].revents) { // Event received?
+            // Read current pin state, store
+            // in internal state flag, but
+            // don't issue to uinput yet --
+            // must wait for debounce!
+            lseek(p[i].fd, 0, SEEK_SET);
+            read(p[i].fd, &c, 1);
+            if(c == '0')      intstate[i] = 1;
+            else if(c == '1') intstate[i] = 0;
+            p[i].revents = 0; // Clear flag
+         }
+      }
+      timeout = debounceTime; // Set timeout for debounce
+      c       = 0;            // Don't issue SYN event
+      // Else timeout occurred
+   } else if(timeout == debounceTime) { // Button debounce timeout
+      // 'j' (number of non-GNDs) is re-counted as
+      // it's easier than maintaining an additional
+      // remapping table or a duplicate key[] list.
+      bitMask = 0L; // Mask of buttons currently pressed
+      bit     = 1L;
+      for(c=i=j=0; io[i].pin >= 0; i++, bit<<=1) {
+         if(io[i].key != GND) {
+            // Compare internal state against
+            // previously-issued value.  Send
+            // keystrokes only for changed states.
+            if(intstate[j] != extstate[j]) {
+               extstate[j] = intstate[j];
+               keyEv.code  = io[i].key;
+               keyEv.value = intstate[j];
+               write(fd, &keyEv,
+                     sizeof(keyEv));
+               c = 1; // Follow w/SYN event
+               if(intstate[j]) { // Press?
+                  // Note pressed key
+                  // and set initial
+                  // repeat interval.
+                  lastKey = i;
+                  timeout = repTime1;
+               } else { // Release?
+                  // Stop repeat and
+                  // return to normal
+                  // IRQ monitoring
+                  // (no timeout).
+                  lastKey = timeout = -1;
+               }
+            }
+            j++;
+            if(intstate[i]) bitMask |= bit;
+         }
+      }*/

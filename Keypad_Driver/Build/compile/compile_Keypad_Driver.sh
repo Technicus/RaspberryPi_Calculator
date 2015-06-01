@@ -10,7 +10,8 @@ sudo cp /home/pi/Calculator/Software/Keypad_Driver/Build/etc/udev/rules.d/*.* /e
 
 #g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver.cpp -lwiringPi;
 #g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V01.cpp -lwiringPi;
-g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V02.cpp -lwiringPi;
+#g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V02.cpp -lwiringPi;
+g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V03.cpp -lwiringPi;
 
 sudo kill `pgrep Keypad_Driver`;
 
