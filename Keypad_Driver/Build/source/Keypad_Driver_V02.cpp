@@ -322,6 +322,9 @@ unsigned int get_key(){
                rowTest = 1;
                key = keyPadNumber[rowCount][columnCount];
                keyPadBool[rowCount][columnCount] = 1;
+               
+               std::cout << "\t\t\tROW: " << rowCount << "\tCOLUMN: " << columnCount << "\tKEY: " << key << "\n";
+               
                if(keyPadBool[0][0] and keyPadBool[9][0] == 1)
                {
                   std::cout << "\t\t\tKey combination 1 and 55 -- SHUTDOWN . . .\n";
@@ -393,7 +396,7 @@ unsigned int get_key(){
                if(keyPadBool[0][0] and keyPadBool[0][1] == 1)
                {
                   //std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 270 . . .\n";
-                  std::cout << "\t\t\tKeypad_Driver_V02 -- check_02\n";
+                  std::cout << "\t\t\tKeypad_Driver_V02 -- check 04, 11:31; debounce test.\n";
                }
                
             }
@@ -433,11 +436,9 @@ int main(int argc, char *argv[])
 	int                    key,
                           fd,           // For mmap, sysfs, uinput
 	                       i, j,         // Asst. counter
-	                       bitmask,      // Pullup enable bitmask
-	                       timeout = -1, // poll() timeout
-	                       intstate[60], // Last-read state
-	                       extstate[60], // Debounced state
-	                       lastKey = -1; // Last key down (for repeat)
+	                       bitmask;      // Pullup enable bitmask
+	                      
+	                       
 	unsigned long          bitMask, bit; // For Vulcan pinch detect
 	volatile unsigned char shortWait;    // Delay counter
 	struct input_event     keyEv, synEv; // uinput events
@@ -455,7 +456,8 @@ int main(int argc, char *argv[])
    
    pin_init();
    
-int returnKeyPress = 0;
+   int returnKeyPress_00 = 0;
+   int returnKeyPress_01 = 0;
 
 
 
@@ -473,7 +475,7 @@ int returnKeyPress = 0;
 	
 	struct uinput_user_dev uidev;
 	memset(&uidev, 0, sizeof(uidev));
-	snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "retrogame");
+   snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "Keypad_Driver");
 	uidev.id.bustype = BUS_USB;
 	uidev.id.vendor  = 0x1;
 	uidev.id.product = 0x1;
@@ -495,15 +497,26 @@ int returnKeyPress = 0;
 
    while(running)
    {
-      returnKeyPress = get_key();
+      returnKeyPress_00 = get_key();
+      
+
+      
       // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
       
-      keyEv.code  = io[returnKeyPress].key;
+      keyEv.code  = io[returnKeyPress_01].key;
       //keyEv.code  = io[i].key;
       keyEv.value = 1;
       write(fd, &keyEv,
          sizeof(keyEv));
-      delay(180);
+      
+      if ( returnKeyPress_00 == returnKeyPress_01 ){
+         delay(180);
+      }
+      else
+      {
+         returnKeyPress_01 = returnKeyPress_00;
+      }
+      
       keyEv.value = 0;
       write(fd, &keyEv,
          sizeof(keyEv));
