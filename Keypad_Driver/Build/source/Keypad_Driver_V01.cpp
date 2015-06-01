@@ -19,6 +19,11 @@
 #include <linux/uinput.h>
 #include <sys/stat.h>
 
+#include <string.h>
+#include <poll.h>
+#include <signal.h>
+#include <sys/mman.h>
+
 #define die(str, args...) do { \
 perror(str); \
 exit(EXIT_FAILURE); \
@@ -201,6 +206,32 @@ const int
    debounceTime = 20;                // 20 ms for button debouncing
    
       
+      // Quick-n-dirty error reporter; print message, clean up and exit.
+      void err(char *msg) {
+         printf("%s: %s.  Try 'sudo %s'.\n", progName, msg, progName);
+         //cleanup();
+         exit(1);
+      }
+      
+      // Un-export any Sysfs pins used; don't leave filesystem cruft.  Also
+      // restores any GND pins to inputs.  Write errors are ignored as pins
+      // may be in a partially-initialized state.
+//       void cleanup() {
+//          char buf[50];
+//          int  fd, i;
+//          sprintf(buf, "%s/unexport", sysfs_root);
+//          if((fd = open(buf, O_WRONLY)) >= 0) {
+//             for(i=0; io[i].pin >= 0; i++) {
+//                // Restore GND items to inputs
+//                if(io[i].key == GND)
+//                   pinConfig(io[i].pin, "direction", "in");
+//                // And un-export all items regardless
+//                sprintf(buf, "%d", io[i].pin);
+//                write(fd, buf, strlen(buf));
+//             }
+//             close(fd);
+//          }
+//       }
 /*
  * + *---------------------------------------+
  * | Prototype: void key_init(void);       |
@@ -429,11 +460,11 @@ int main(int argc, char *argv[])
 	unsigned long          bitMask, bit; // For Vulcan pinch detect
 	volatile unsigned char shortWait;    // Delay counter
 	struct input_event     keyEv, synEv; // uinput events
-	struct pollfd          p[32];        // GPIO file descriptors
+	//struct pollfd          p[32];        // GPIO file descriptors
 
 	progName = argv[0];             // For error reporting
-	signal(SIGINT , signalHandler); // Trap basic signals (exit cleanly)
-	signal(SIGKILL, signalHandler);
+	//signal(SIGINT , signalHandler); // Trap basic signals (exit cleanly)
+	//signal(SIGKILL, signalHandler);
 
    int                    key;
    
@@ -448,7 +479,7 @@ int main(int argc, char *argv[])
    //    struct uinput_user_dev device;
    //    memset(&device, 0, sizeof device);
    
-   if((fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) < 0)
+  /* if((fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) < 0)
       err("Can't open /dev/uinput");
    if(ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0)
       err("Can't SET_EVBIT");
@@ -495,74 +526,197 @@ int main(int argc, char *argv[])
    //std::cout << "\tSetup uinput complete . . .\n";
    
    
-   
-   int returnKeyPress = 0;
-   
+   */
+  
+//    int returnKeyPress = 0;
+//    
+//    while(running)
+//    {
+//       returnKeyPress = get_key();
+//      // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
+// 
+//       keyEv.code  = io[returnKeyPress].key;
+      
+//       {
+//          ev.type = EV_KEY;
+//          ev.code = KEY_D;
+//          ev.value = 1;
+//          
+//          ret = write(fd, &ev, sizeof(ev));
+//          sleep(1);
+//          
+//          ev.value = 0;
+//          ret = write(fd, &ev, sizeof(ev));
+//       }
+      
+//       if (returnKeyPress == 1) {
+//         // std::cout << "\t\t\tattempting to send to uinput . . .\n";
+// 
+//          keyEv.code  = io[returnKeyPress].key;
+//          keyEv.value = intstate[returnKeyPress];
+//          
+//          send_event(fd, EV_KEY, KEY_A, 1);
+//          send_event(fd, EV_SYN, SYN_REPORT, 0);
+//          delay(180);
+//          send_event(fd, EV_KEY, KEY_A, 0);
+//          send_event(fd, EV_SYN, SYN_REPORT, 0);
+//       }
+//       if (returnKeyPress == 2) {
+//          std::cout << "\t\t\tattempting to send to uinput . . . Button press = " << returnKeyPress << "\n";
+//          if (ioctl(fd,UI_SET_EVBIT,EV_KEY) < 0)
+//             fprintf(stderr, "\t\terror evbit key\n");
+//          
+//          if (ioctl(fd,UI_SET_KEYBIT, KEY_B) < 0)
+//             fprintf(stderr, "\t\terror evbit key\n");
+//          
+//          if (ioctl(fd,UI_SET_EVBIT,EV_REL) < 0)
+//             fprintf(stderr, "\t\terror evbit rel\n");
+//          
+//          send_event(fd, EV_KEY, KEY_B, 1);
+//          send_event(fd, EV_SYN, SYN_REPORT, 0);
+//          delay(180);
+//          send_event(fd, EV_KEY, KEY_B, 0);
+//          send_event(fd, EV_SYN, SYN_REPORT, 0);
+//       }
+//       if (returnKeyPress == 60) {
+//         // std::cout << "\t\t\tattempting to send to uinput . . .\n";
+//          
+//          send_event(fd, EV_KEY, KEY_ENTER, 1);
+//          send_event(fd, EV_SYN, SYN_REPORT, 0);
+//          delay(180);
+//          send_event(fd, EV_KEY, KEY_ENTER, 0);
+//          send_event(fd, EV_SYN, SYN_REPORT, 0);
+//       }
+//       
+//       delay(180);
+//    }
+//    
+//    if(ioctl(fd, UI_DEV_DESTROY) < 0)
+//       die("\t\t\t\terror: ioctl\n");
+//    
+//    close(fd);
+//    
+//    return 0 ;
+
+
+// A few arrays here are declared with 32 elements, even though
+	// values aren't needed for io[] members where the 'key' value is
+	// GND.  This simplifies the code a bit -- no need for mallocs and
+	// tests to create these arrays -- but may waste a handful of
+	// bytes for any declared GNDs.
+// 	char                   buf[50],      // For sundry filenames
+// 	                       c,            // Pin input value ('0'/'1')
+// 	                       board;        // 0=Pi1Rev1, 1=Pi1Rev2, 2=Pi2
+// 	int                    fd,           // For mmap, sysfs, uinput
+// 	                       i, j,         // Asst. counter
+// 	                       bitmask,      // Pullup enable bitmask
+// 	                       timeout = -1, // poll() timeout
+// 	                       intstate[32], // Last-read state
+// 	                       extstate[32], // Debounced state
+// 	                       lastKey = -1; // Last key down (for repeat)
+// 	unsigned long          bitMask, bit; // For Vulcan pinch detect
+// 	volatile unsigned char shortWait;    // Delay counter
+// 	struct input_event     keyEv, synEv; // uinput events
+// 	struct pollfd          p[32];        // GPIO file descriptors
+// 
+// 	progName = argv[0];             // For error reporting
+// 	signal(SIGINT , signalHandler); // Trap basic signals (exit cleanly)
+// 	signal(SIGKILL, signalHandler);
+
+	// Select io[] table for Cupcade (TFT) or 'normal' project.
+// 	io = (access("/etc/modprobe.d/adafruit.conf", F_OK) ||
+// 	      access("/dev/fb1", F_OK)) ? ioStandard : ioTFT;
+   io = io_0;
+
+//struct input_event     keyEv, synEv; // uinput events
+
+int returnKeyPress = 0;
+
+
+
+// Retrogame normally uses /dev/uinput for generating key events.
+	// Cupcade requires this and it's the default.  SDL2 (used by
+	// some newer emulators) doesn't like it, wants /dev/input/event0
+	// instead.  Enable that code by changing to "#if 0" above.
+	if((fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK)) < 0)
+		err("Can't open /dev/uinput");
+	if(ioctl(fd, UI_SET_EVBIT, EV_KEY) < 0)
+		err("Can't SET_EVBIT");
+	for(i=0; io[i].pin >= 0; i++) {
+		if(io[i].key != GND) {
+			if(ioctl(fd, UI_SET_KEYBIT, io[i].key) < 0)
+				err("Can't SET_KEYBIT");
+		}
+	}
+	//if(ioctl(fd, UI_SET_KEYBIT, vulcanKey) < 0) err("Can't SET_KEYBIT");
+	struct uinput_user_dev uidev;
+	memset(&uidev, 0, sizeof(uidev));
+	snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "retrogame");
+	uidev.id.bustype = BUS_USB;
+	uidev.id.vendor  = 0x1;
+	uidev.id.product = 0x1;
+	uidev.id.version = 1;
+	if(write(fd, &uidev, sizeof(uidev)) < 0)
+		err("write failed");
+	if(ioctl(fd, UI_DEV_CREATE) < 0)
+		err("DEV_CREATE failed");
+
+	// Initialize input event structures
+	memset(&keyEv, 0, sizeof(keyEv));
+	keyEv.type  = EV_KEY;
+	memset(&synEv, 0, sizeof(synEv));
+	synEv.type  = EV_SYN;
+	synEv.code  = SYN_REPORT;
+	synEv.value = 0;
+
+	// 'fd' is now open file descriptor for issuing uinput events
+
    while(running)
    {
       returnKeyPress = get_key();
-     // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
-
+      // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
+      
       keyEv.code  = io[returnKeyPress].key;
-      
-      {
-         ev.type = EV_KEY;
-         ev.code = KEY_D;
-         ev.value = 1;
-         
-         ret = write(fd, &ev, sizeof(ev));
-         sleep(1);
-         
-         ev.value = 0;
-         ret = write(fd, &ev, sizeof(ev));
-      }
-      
-      if (returnKeyPress == 1) {
-        // std::cout << "\t\t\tattempting to send to uinput . . .\n";
-
-         keyEv.code  = io[returnKeyPress].key;
-         keyEv.value = intstate[returnKeyPress];
-         
-         send_event(fd, EV_KEY, KEY_A, 1);
-         send_event(fd, EV_SYN, SYN_REPORT, 0);
-         delay(180);
-         send_event(fd, EV_KEY, KEY_A, 0);
-         send_event(fd, EV_SYN, SYN_REPORT, 0);
-      }
-      if (returnKeyPress == 2) {
-         std::cout << "\t\t\tattempting to send to uinput . . . Button press = " << returnKeyPress << "\n";
-         if (ioctl(fd,UI_SET_EVBIT,EV_KEY) < 0)
-            fprintf(stderr, "\t\terror evbit key\n");
-         
-         if (ioctl(fd,UI_SET_KEYBIT, KEY_B) < 0)
-            fprintf(stderr, "\t\terror evbit key\n");
-         
-         if (ioctl(fd,UI_SET_EVBIT,EV_REL) < 0)
-            fprintf(stderr, "\t\terror evbit rel\n");
-         
-         send_event(fd, EV_KEY, KEY_B, 1);
-         send_event(fd, EV_SYN, SYN_REPORT, 0);
-         delay(180);
-         send_event(fd, EV_KEY, KEY_B, 0);
-         send_event(fd, EV_SYN, SYN_REPORT, 0);
-      }
-      if (returnKeyPress == 60) {
-        // std::cout << "\t\t\tattempting to send to uinput . . .\n";
-         
-         send_event(fd, EV_KEY, KEY_ENTER, 1);
-         send_event(fd, EV_SYN, SYN_REPORT, 0);
-         delay(180);
-         send_event(fd, EV_KEY, KEY_ENTER, 0);
-         send_event(fd, EV_SYN, SYN_REPORT, 0);
-      }
-      
+      //keyEv.code  = io[i].key;
+      keyEv.value = 1;
+      write(fd, &keyEv,
+         sizeof(keyEv));
       delay(180);
+      keyEv.value = 0;
+      write(fd, &keyEv,
+         sizeof(keyEv));
    }
    
-   if(ioctl(fd, UI_DEV_DESTROY) < 0)
-      die("\t\t\t\terror: ioctl\n");
+   /*
+for(c=i=j=0; io[i].pin >= 0; i++, bit<<=1) {
+   if(io[i].key != GND) {
+      // Compare internal state against
+      // previously-issued value.  Send
+      // keystrokes only for changed states.
+      if(intstate[j] != extstate[j]) {
+         extstate[j] = intstate[j];
+         keyEv.code  = io[i].key;
+         keyEv.value = intstate[j];
+         write(fd, &keyEv,
+               sizeof(keyEv));
+         c = 1; // Follow w/SYN event
+         if(intstate[j]) { // Press?
+            // Note pressed key
+            // and set initial
+            // repeat interval.
+            lastKey = i;
+            timeout = repTime1;
+         } else { // Release?
+            // Stop repeat and
+            // return to normal
+            // IRQ monitoring
+            // (no timeout).
+            lastKey = timeout = -1;
+         }
+      }
+      j++;
+      if(intstate[i]) bitMask |= bit;
+   }
+}*/
    
-   close(fd);
-   
-   return 0 ;
 }
