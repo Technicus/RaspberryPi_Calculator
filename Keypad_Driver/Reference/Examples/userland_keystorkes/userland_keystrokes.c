@@ -14,6 +14,9 @@
  *   gcc -o userland_keystrokes. userland_keystrokes.c 
  *   modprobe uinput
  *   ./userland_keystrokes
+ * 
+ * https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/input.h
+ * 
  */
 
 #define UINPUT_MAX_NAME_SIZE    80
@@ -63,9 +66,13 @@ void main(void){
 	memset(&ev, 0, sizeof(ev));
 
 	int i;
+   __u16 arr[42];
+   //arr[0]="KEY_Y";
+   arr[1]="KEY_Y";
 	for (i=0;i<20;i++) {
 		ev.type = EV_KEY;
-		ev.code = KEY_D;
+      //ev.code = KEY_D;
+      ev.code = arr[1];
 		ev.value = 1;
 
 		ret = write(fd, &ev, sizeof(ev));

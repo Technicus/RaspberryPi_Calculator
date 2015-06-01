@@ -50,6 +50,7 @@ exit(EXIT_FAILURE); \
 #define FALSE 0
 
 #define GND -1
+
 struct {
    int pin;
    int key;
@@ -364,8 +365,8 @@ int main(int argc, char *argv[])
 	                       i, j,         // Asst. counter
 	                       bitmask,      // Pullup enable bitmask
 	                       timeout = -1, // poll() timeout
-	                       intstate[32], // Last-read state
-	                       extstate[32], // Debounced state
+	                       intstate[60], // Last-read state
+	                       extstate[60], // Debounced state
 	                       lastKey = -1; // Last key down (for repeat)
 	unsigned long          bitMask, bit; // For Vulcan pinch detect
 	volatile unsigned char shortWait;    // Delay counter
@@ -434,7 +435,7 @@ int main(int argc, char *argv[])
    
    int returnKeyPress = 0;
    
-   for (;;)
+   while(running)
    {
       returnKeyPress = get_key();
      // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
@@ -442,6 +443,8 @@ int main(int argc, char *argv[])
       if (returnKeyPress == 1) {
         // std::cout << "\t\t\tattempting to send to uinput . . .\n";
 
+         keyEv.code  = io[returnKeyPress].key;
+         keyEv.value = intstate[returnKeyPress];
          
          send_event(fd, EV_KEY, KEY_A, 1);
          send_event(fd, EV_SYN, SYN_REPORT, 0);
