@@ -55,84 +55,142 @@ struct {
    int pin;
    int key;
 } *io, // In main() this pointer is set to one of the two tables below.
-   io_0[] = {
-      // This pin/key table is used if an Adafruit PiTFT display
-      // is detected (e.g. Cupcade or PiGRRL).
-      // Input   Output (from /usr/include/linux/input.h)
-      {   1,      KEY_A                 },
-      {   2,      KEY_B                 },
-      {   3,      KEY_C                 },
-      {   4,      KEY_D                 },
-      {   5,      KEY_E                 },
-      {   6,      KEY_F                 },
-      {   7,      KEY_G                 },
-      {   8,      KEY_H                 },
-      {   9,      KEY_I                 },
-      {   10,     KEY_J                 },
-      {   11,     KEY_K                 },
-      {   12,     KEY_L                 },
-      {   13,     KEY_M                 },
-      {   14,     KEY_N                 },
-      {   15,     KEY_O                 },
-      {   16,     KEY_P                 },
-      {   17,     KEY_Q                 },
-      {   18,     KEY_R                 },
-      {   19,     KEY_S                 },
-      {   20,     KEY_T                 },
-      {   21,     KEY_U                 },
-      {   22,     KEY_V                 },
-      {   23,     KEY_W                 },
-      {   24,     KEY_X                 },
-      {   25,     KEY_Y                 },
-      {   26,     KEY_Z                 },
-      {   27,     KEY_0                 },
-      {   28,     KEY_1                 },
-      {   29,     KEY_2                 },
-      {   30,     KEY_3                 },
-      {   31,     KEY_4                 },
-      {   32,     KEY_5                 },
-      {   33,     KEY_6                 },
-      {   34,     KEY_7                 },
-      {   35,     KEY_8                 },
-      {   36,     KEY_9                 },
-      {   37,     KEY_MINUS             },
-      {   38,     KEY_DOT               },
-      {   39,     KEY_BACKSLASH         },
-      {   40,     KEY_SLASH             },
-      {   41,     KEY_CAPSLOCK          },
-      {   42,     KEY_SHIFT             },
-      {   43,     KEY_LEFTCTRL          },
-      {   44,     KEY_LEFTALT           },
-      {   45,     KEY_SPACE             },
-      {   46,     KEY_COMMA             },
-      {   47,     KEY_KPASTERISK        },
-      {   48,     KEY_KPPLUS            },
-      {   49,     KEY_SEMICOLON         },
-      {   50,     KEY_RIGHTCTL          },
-      {   51,     KEY_ESC               },
-      {   52,     KEY_TAB               },
-      {   53,     KEY_DELETE            },
-      {   54,     KEY_APOSTROPHE        },
-      {   55,     KEY_SPACE             },
-      {   56,     KEY_SPACE             },
-      {   57,     KEY_COMMA             },
-      {   58,     KEY_DOT               },
-      {   59,     KEY_BACKSPACE         },
-      {   60,     KEY_ENTER             },
-      {   61,     KEY_DOWN              },
-      {   62,     KEY_LEFT              },
-      {   63,     KEY_RIGHT             },
-      {  -1,     -1           } }, // END OF LIST, DO NOT CHANGE
-   // MAME must be configured with 'z' & 'x' as buttons 1 & 2 -
-   // this was required for the accompanying 'menu' utility to
-   // work (catching crtl/alt w/ncurses gets totally NASTY).
-   // Credit/start are likewise moved to 'r' & 'q,' reason being
-   // to play nicer with certain emulators not liking numbers.
-   // GPIO options are 'maxed out' with PiTFT + above table.
-   // If additional buttons are desired, will need to disable
-   // serial console and/or use P5 header.  Or use keyboard.
-   io_90[] = {
-   }
+
+io_0[] = {
+   // This pin/key table is used if the orientation is portrait
+   // Input   Output (from /usr/include/linux/input.h)
+   {   1,      KEY_A                 },
+   {   2,      KEY_B                 },
+   {   3,      KEY_C                 },
+   {   4,      KEY_D                 },
+   {   5,      KEY_E                 },
+   {   6,      KEY_F                 },
+   {   7,      KEY_G                 },
+   {   8,      KEY_H                 },
+   {   9,      KEY_I                 },
+   {   10,     KEY_J                 },
+   {   11,     KEY_K                 },
+   {   12,     KEY_L                 },
+   {   13,     KEY_M                 },
+   {   14,     KEY_N                 },
+   {   15,     KEY_O                 },
+   {   16,     KEY_P                 },
+   {   17,     KEY_Q                 },
+   {   18,     KEY_R                 },
+   {   19,     KEY_S                 },
+   {   20,     KEY_T                 },
+   {   21,     KEY_U                 },
+   {   22,     KEY_V                 },
+   {   23,     KEY_W                 },
+   {   24,     KEY_X                 },
+   {   25,     KEY_Y                 },
+   {   26,     KEY_Z                 },
+   {   27,     KEY_0                 },
+   {   28,     KEY_1                 },
+   {   29,     KEY_2                 },
+   {   30,     KEY_3                 },
+   {   31,     KEY_4                 },
+   {   32,     KEY_5                 },
+   {   33,     KEY_6                 },
+   {   34,     KEY_7                 },
+   {   35,     KEY_8                 },
+   {   36,     KEY_9                 },
+   {   37,     KEY_MINUS             },
+   {   38,     KEY_DOT               },
+   {   39,     KEY_BACKSLASH         },
+   {   40,     KEY_SLASH             },
+   {   41,     KEY_CAPSLOCK          },
+   {   42,     KEY_LEFTSHIFT         },
+   {   43,     KEY_LEFTCTRL          },
+   {   44,     KEY_LEFTALT           },
+   {   45,     KEY_SPACE             },
+   {   46,     KEY_COMMA             },
+   {   47,     KEY_KPASTERISK        },
+   {   48,     KEY_KPPLUS            },
+   {   49,     KEY_SEMICOLON         },
+   {   50,     KEY_RIGHTCTRL         },
+   {   51,     KEY_ESC               },
+   {   52,     KEY_TAB               },
+   {   53,     KEY_DELETE            },
+   {   54,     KEY_APOSTROPHE        },
+   {   55,     KEY_SPACE             },
+   {   56,     KEY_SPACE             },
+   {   57,     KEY_COMMA             },
+   {   58,     KEY_DOT               },
+   {   59,     KEY_BACKSPACE         },
+   {   60,     KEY_ENTER             },
+   {   61,     KEY_DOWN              },
+   {   62,     KEY_LEFT              },
+   {   63,     KEY_RIGHT             },
+   {  -1,     -1           } },
+   
+io_90[] = {
+   // This pin/key table is used if the orientation is landscape
+   // Input   Output (from /usr/include/linux/input.h)
+   {   1,      KEY_A                 },
+   {   2,      KEY_B                 },
+   {   3,      KEY_C                 },
+   {   4,      KEY_D                 },
+   {   5,      KEY_E                 },
+   {   6,      KEY_F                 },
+   {   7,      KEY_G                 },
+   {   8,      KEY_H                 },
+   {   9,      KEY_I                 },
+   {   10,     KEY_J                 },
+   {   11,     KEY_K                 },
+   {   12,     KEY_L                 },
+   {   13,     KEY_M                 },
+   {   14,     KEY_N                 },
+   {   15,     KEY_O                 },
+   {   16,     KEY_P                 },
+   {   17,     KEY_Q                 },
+   {   18,     KEY_R                 },
+   {   19,     KEY_S                 },
+   {   20,     KEY_T                 },
+   {   21,     KEY_U                 },
+   {   22,     KEY_V                 },
+   {   23,     KEY_W                 },
+   {   24,     KEY_X                 },
+   {   25,     KEY_Y                 },
+   {   26,     KEY_Z                 },
+   {   27,     KEY_0                 },
+   {   28,     KEY_1                 },
+   {   29,     KEY_2                 },
+   {   30,     KEY_3                 },
+   {   31,     KEY_4                 },
+   {   32,     KEY_5                 },
+   {   33,     KEY_6                 },
+   {   34,     KEY_7                 },
+   {   35,     KEY_8                 },
+   {   36,     KEY_9                 },
+   {   37,     KEY_MINUS             },
+   {   38,     KEY_DOT               },
+   {   39,     KEY_BACKSLASH         },
+   {   40,     KEY_SLASH             },
+   {   41,     KEY_CAPSLOCK          },
+   {   42,     KEY_LEFTSHIFT         },
+   {   43,     KEY_LEFTCTRL          },
+   {   44,     KEY_LEFTALT           },
+   {   45,     KEY_SPACE             },
+   {   46,     KEY_COMMA             },
+   {   47,     KEY_KPASTERISK        },
+   {   48,     KEY_KPPLUS            },
+   {   49,     KEY_SEMICOLON         },
+   {   50,     KEY_RIGHTCTRL         },
+   {   51,     KEY_ESC               },
+   {   52,     KEY_TAB               },
+   {   53,     KEY_DELETE            },
+   {   54,     KEY_APOSTROPHE        },
+   {   55,     KEY_SPACE             },
+   {   56,     KEY_SPACE             },
+   {   57,     KEY_COMMA             },
+   {   58,     KEY_DOT               },
+   {   59,     KEY_BACKSPACE         },
+   {   60,     KEY_ENTER             },
+   {   61,     KEY_DOWN              },
+   {   62,     KEY_LEFT              },
+   {   63,     KEY_RIGHT             },
+   {  -1,     -1           } };
       
 unsigned char keyval;	//A variable
 char
@@ -305,7 +363,7 @@ unsigned int get_key(){
                }
                if(keyPadBool[0][0] and keyPadBool[9][3] == 1)
                {
-                  std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 90 . . .\n";
+                  std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 180 . . .\n";
                   delay(180);
                   char c;
                   int in, out;
@@ -318,7 +376,7 @@ unsigned int get_key(){
                }
                if(keyPadBool[0][0] and keyPadBool[9][4] == 1)
                {
-                  std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 0 . . .\n";
+                  std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 270 . . .\n";
                   char c;
                   int in, out;
                   in = open("/boot/config.txt.tft-270", O_RDONLY);
@@ -400,6 +458,7 @@ int main(int argc, char *argv[])
             err("Can't SET_KEYBIT");
       }
    }
+   
    struct uinput_user_dev uidev;
    memset(&uidev, 0, sizeof(uidev));
    snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "Keypad_Driver");
@@ -411,7 +470,11 @@ int main(int argc, char *argv[])
       err("write failed");
    if(ioctl(fd, UI_DEV_CREATE) < 0)
       err("DEV_CREATE failed");
-         
+   
+   struct input_event ev;
+   
+   memset(&ev, 0, sizeof(ev));
+            
    // Initialize input event structures
    memset(&keyEv, 0, sizeof(keyEv));
    keyEv.type  = EV_KEY;
@@ -439,6 +502,20 @@ int main(int argc, char *argv[])
    {
       returnKeyPress = get_key();
      // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
+
+      keyEv.code  = io[returnKeyPress].key;
+      
+      {
+         ev.type = EV_KEY;
+         ev.code = KEY_D;
+         ev.value = 1;
+         
+         ret = write(fd, &ev, sizeof(ev));
+         sleep(1);
+         
+         ev.value = 0;
+         ret = write(fd, &ev, sizeof(ev));
+      }
       
       if (returnKeyPress == 1) {
         // std::cout << "\t\t\tattempting to send to uinput . . .\n";

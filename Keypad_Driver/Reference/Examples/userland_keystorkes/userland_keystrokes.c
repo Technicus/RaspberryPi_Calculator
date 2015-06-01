@@ -66,13 +66,16 @@ void main(void){
 	memset(&ev, 0, sizeof(ev));
 
 	int i;
-   __u16 arr[42];
+   //__u16 arr[42];
    //arr[0]="KEY_Y";
-   arr[1]="KEY_Y";
+   //arr[1]="KEY_Y";
+   __u16 array[60];
+   ((__u16*)array)[0] = KEY_Y;
+   array[0]=KEY_Y;
+   
 	for (i=0;i<20;i++) {
 		ev.type = EV_KEY;
-      //ev.code = KEY_D;
-      ev.code = arr[1];
+      ev.code = KEY_D;
 		ev.value = 1;
 
 		ret = write(fd, &ev, sizeof(ev));

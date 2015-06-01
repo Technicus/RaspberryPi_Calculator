@@ -349,7 +349,7 @@ int main(int argc, char *argv[])
          send_event(fd, EV_SYN, SYN_REPORT, 0);
       }
       if (returnKeyPress == 2) {
-         std::cout << "\t\t\tattempting to send to uinput . . . Button press = " << returnKeyPress << "\n";
+         std::cout << "\t\t\tVALIDATE!!!!" << returnKeyPress << "\n";
          if (ioctl(fd,UI_SET_EVBIT,EV_KEY) < 0)
             fprintf(stderr, "\t\terror evbit key\n");
          
