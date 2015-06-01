@@ -1,14 +1,16 @@
 #/!bin/bash
 
 #rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress Technician@10.42.0.1:'/run/media/Technician/Work/Work/Newark/TBHS/Episodes/Episode_Files/Episode\ 189\ -\ Raspberry\ Pi\ Compute\ Calculator/Software/Calculator/Keypad_Driver/' /home/pi/Calculator/Software/Keypad_Driver/;
-rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress Technician@192.168.2.3:'/run/media/Technician/Work/Work/Newark/TBHS/Episodes/Episode_Files/Episode\ 189\ -\ Raspberry\ Pi\ Compute\ Calculator/Software/Calculator/Keypad_Driver/' /home/pi/Calculator/Software/Keypad_Driver/;
+#rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress Technician@192.168.2.3:'/run/media/Technician/Work/Work/Newark/TBHS/Episodes/Episode_Files/Episode\ 189\ -\ Raspberry\ Pi\ Compute\ Calculator/Software/Calculator/Keypad_Driver/' /home/pi/Calculator/Software/Keypad_Driver/;
+rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" --progress Technician@192.168.1.132:'/run/media/Technician/Work/Work/Newark/TBHS/Episodes/Episode_Files/Episode\ 189\ -\ Raspberry\ Pi\ Compute\ Calculator/Software/Calculator/Keypad_Driver/' /home/pi/Calculator/Software/Keypad_Driver/;
 
 sudo cp /home/pi/Calculator/Software/Keypad_Driver/Build/boot/*.* /boot;
 sudo cp /home/pi/Calculator/Software/Keypad_Driver/Build/etc/*.* /etc;
 sudo cp /home/pi/Calculator/Software/Keypad_Driver/Build/etc/udev/rules.d/*.* /etc/udev/rules.d;
 
 #g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver.cpp -lwiringPi;
-g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V01.cpp -lwiringPi;
+#g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V01.cpp -lwiringPi;
+g++ -Wall -o /home/pi/Calculator/Software/Keypad_Driver/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V02.cpp -lwiringPi;
 
 sudo kill `pgrep Keypad_Driver`;
 
