@@ -390,7 +390,7 @@ unsigned int get_key(){
                if(keyPadBool[0][0] and keyPadBool[0][1] == 1)
                {
                   //std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 270 . . .\n";
-                  std::cout << "\tKeypad_Driver_V03 -- check 01, 14:37; compile test.\n";
+                  std::cout << "\tKeypad_Driver_V03 -- check 02, 16:13; compile test.\n";
                }
                
             }
@@ -402,6 +402,7 @@ unsigned int get_key(){
          digitalWrite (column[columnCount], LOW);
       }
    }
+   delay(80);
    return (key);  // Return key number
 }    
     
@@ -450,7 +451,7 @@ int main(int argc, char *argv[])
    
    pin_init();
    
-   int returnKeyPress_00 = 0;
+   int returnKeyPress = 0;
    int returnKeyPress_01 = 0;
 
 
@@ -493,81 +494,87 @@ int main(int argc, char *argv[])
 
    while(running)
    {
-      returnKeyPress_00 = get_key();
-      
-      // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
-      
-      keyEv.code  = io[returnKeyPress_00].key;
+      returnKeyPress = get_key();
+      //if (returnKeyPress == 1) {
+         // std::cout << "\t\t\tattempting to send to uinput . . .\n";
 
-      keyEv.value = 1;
-
-      write(fd, &keyEv, sizeof(keyEv));
+      switch ( returnKeyPress ) {
+         case 0:
+            send_event(fd, EV_KEY, KEY_A, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_A, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_A . . .\n";
+            break;
+         case 1:
+            send_event(fd, EV_KEY, KEY_B, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_B, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_B . . .\n";
+            break;
+         case 2:
+            send_event(fd, EV_KEY, KEY_C, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_C, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_C . . .\n";
+            break;
+         case 3:
+            send_event(fd, EV_KEY, KEY_D, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_D, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_D . . .\n";
+            break;
+         case 4:
+            send_event(fd, EV_KEY, KEY_E, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_E, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_E . . .\n";
+            break;
+         case 5:
+            send_event(fd, EV_KEY, KEY_F, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_F, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_F . . .\n";
+            break;
+         case 6:
+            send_event(fd, EV_KEY, KEY_G, 1);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            delay(180);
+            send_event(fd, EV_KEY, KEY_G, 0);
+            send_event(fd, EV_SYN, SYN_REPORT, 0);
+            std::cout << "\t\t\tattempting to send KEY_G . . .\n";
+            break;
+         default:
+            break;
+      }
       
-      delay(180);
       
-      keyEv.value = 0;
-
-      write(fd, &keyEv, sizeof(keyEv));
+//       // std::cout << "\t\tButton press = " << returnKeyPress << "\n";
+//       
+//       keyEv.code  = io[returnKeyPress].key;
+// 
+//       keyEv.value = 1;
+// 
+//       write(fd, &keyEv, sizeof(keyEv));
+//       
+//       //delay(180);
+//       
+//       keyEv.value = 0;
+// 
+//       write(fd, &keyEv, sizeof(keyEv));
    }
    
    return 0;
    
 }
-
-/*
-while(running) { 
-   // Signal handler can set this to 0 to exit
-   // Wait for IRQ on pin (or timeout for button debounce)
-   if(poll(p, j, timeout) > 0) { // If IRQ...
-      for(i=0; i<j; i++) {       // Scan non-GND pins...
-         if(p[i].revents) { // Event received?
-            // Read current pin state, store
-            // in internal state flag, but
-            // don't issue to uinput yet --
-            // must wait for debounce!
-            lseek(p[i].fd, 0, SEEK_SET);
-            read(p[i].fd, &c, 1);
-            if(c == '0')      intstate[i] = 1;
-            else if(c == '1') intstate[i] = 0;
-            p[i].revents = 0; // Clear flag
-         }
-      }
-      timeout = debounceTime; // Set timeout for debounce
-      c       = 0;            // Don't issue SYN event
-      // Else timeout occurred
-   } else if(timeout == debounceTime) { // Button debounce timeout
-      // 'j' (number of non-GNDs) is re-counted as
-      // it's easier than maintaining an additional
-      // remapping table or a duplicate key[] list.
-      bitMask = 0L; // Mask of buttons currently pressed
-      bit     = 1L;
-      for(c=i=j=0; io[i].pin >= 0; i++, bit<<=1) {
-         if(io[i].key != GND) {
-            // Compare internal state against
-            // previously-issued value.  Send
-            // keystrokes only for changed states.
-            if(intstate[j] != extstate[j]) {
-               extstate[j] = intstate[j];
-               keyEv.code  = io[i].key;
-               keyEv.value = intstate[j];
-               write(fd, &keyEv,
-                     sizeof(keyEv));
-               c = 1; // Follow w/SYN event
-               if(intstate[j]) { // Press?
-                  // Note pressed key
-                  // and set initial
-                  // repeat interval.
-                  lastKey = i;
-                  timeout = repTime1;
-               } else { // Release?
-                  // Stop repeat and
-                  // return to normal
-                  // IRQ monitoring
-                  // (no timeout).
-                  lastKey = timeout = -1;
-               }
-            }
-            j++;
-            if(intstate[i]) bitMask |= bit;
-         }
-      }*/
