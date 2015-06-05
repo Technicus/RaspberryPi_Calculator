@@ -1,6 +1,6 @@
 #!/bin/bash
 
-g++ -Wall -o /home/pi/Calculator/Software/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V08.cpp -lwiringPi;
+g++ -Wall -o /home/pi/Calculator/Software/Build/bin/Keypad_Driver /home/pi/Calculator/Software/Keypad_Driver/Build/source/Keypad_Driver_V09.c -lwiringPi;
 g++ -o /home/pi/Calculator/Software/Build/bin/SimpleCalculator /home/pi/Calculator/Software/Math/source/SimpleCalculator_v02.c -lm -lncurses;
 
 if [ "$(pidof Keypad_Driver)" ] 
