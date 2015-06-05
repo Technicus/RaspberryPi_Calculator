@@ -18,5 +18,6 @@ if [ "$_IP" ]; then
 fi
 #sudo /home/pi/Calculator/Utilities/Scripts/AutoRun/auto_run.sh &
 sudo /usr/local/bin/Keypad_Driver &
+sudo /usr/local/bin/SimpleCalculator &
 hostname -I
 exit 0

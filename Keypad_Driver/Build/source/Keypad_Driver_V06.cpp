@@ -10,6 +10,7 @@
 #include <linux/input.h>
 #include <linux/uinput.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 
 #include <string.h>
 #include <poll.h>
@@ -202,7 +203,26 @@ const int
          exit(1);
       }
       
- 
+ int reportOrientation()
+{
+   int orientation = 0;
+   FILE *bootConfigFile=fopen("/boot/config.txt","r"); //"/boot/config.txt"
+   char tmp[256]={0x0};
+   while(bootConfigFile!=NULL && fgets(tmp, sizeof(tmp), bootConfigFile)!=NULL)
+   {
+      if (strstr(tmp, "rotate=90")){
+         printf("%s", tmp);
+         orientation = 90;
+      }
+      else if (strstr(tmp, "rotate=0")){
+         printf("%s", tmp);
+         orientation = 0;
+      }
+   }
+   if(bootConfigFile!=NULL) fclose(bootConfigFile);
+   return orientation;
+}
+
 /*
  * + *---------------------------------------+
  * | Prototype: void pin_init(void);       |
@@ -322,40 +342,46 @@ unsigned int get_key(){
    {
       for ( columnCount = 0; columnCount <= 5; columnCount++  )
       {
-         if (columnCount < 4)
-         {
-            //assert columncount LSB on GPIO14
-            digitalWrite (dpadMSB, pinToggle_1);   digitalWrite (dpadLSB, pinToggle_0);
-            delay(1);
-            digitalRead (dpadRead);
-            
-            if ( dpadMSB == 0 and dpadLSB == 0 and dpadRead == 0 ) {
-               printf("\tDPAD:  UP;\t dpadMSB == %d, dpadLSB == %d", dpadMSB, dpadLSB); 
-            }
-            if ( dpadMSB == 0 and dpadLSB == 1 and dpadRead == 0 ) {
-               printf("\tDPAD: DOWN;\t dpadMSB == %d, dpadLSB == %d", dpadMSB, dpadLSB); 
-            }
-            if ( dpadMSB == 1 and dpadLSB == 0 and dpadRead == 0 ) {
-               printf("\tDPAD: LEFT;\t dpadMSB == %d, dpadLSB == %d", dpadMSB, dpadLSB); 
-            }
-            if ( dpadMSB == 1 and dpadLSB == 1 and dpadRead == 0 ) {
-               printf("\tDPAD: RIGHT;\t dpadMSB == %d, dpadLSB == %d", dpadMSB, dpadLSB); 
-            }
-            
-            if ( pinToggle_1 == 0 and pinToggle_0 == 0 and pinCheck == 1 ){
-               pinToggle_1 = 0;  pinToggle_0 = 1; pinCheck = 0;
-            }
-            if ( pinToggle_1 == 0 and pinToggle_0 == 1 and pinCheck == 1 ){
-               pinToggle_1 = 1;  pinToggle_0 = 0; pinCheck = 0;
-            }
-            if ( pinToggle_1 == 1 and pinToggle_0 == 0 and pinCheck == 1 ){
-               pinToggle_1 = 1;  pinToggle_0 = 1; pinCheck = 0;
-            }
-            if ( pinToggle_1 == 1 and pinToggle_0 == 1 and pinCheck == 1 ){
-               pinToggle_1 = 0;  pinToggle_0 = 0; pinCheck = 0;
-            }
-            pinCheck = 1;
-         }
+
+//          digitalWrite(dpadMSB, (columnCount & 0x02) >> 1);
+//          digitalWrite(dpadLSB, (columnCount & 0x01));
+// 
+//          delayMicroseconds(1);
+//          
+//          bool bitChecker = !digitalRead(dpadRead);
+//          
+//          switch (columnCount)
+//          {
+//             case 0:
+//                if (bitChecker)
+//                {
+//                   printf("\tDPAD: LEFT;\n", dpadMSB, dpadLSB);    
+//                   delay(100);
+//                }
+//             break;
+//             case 1:
+//                if (bitChecker)
+//                {
+//                   printf("\tDPAD: RIGHT;\n", dpadMSB, dpadLSB);
+//                   delay(100);
+//                }
+//                break;              
+//             case 2:
+//                if (bitChecker)
+//                {
+//                   printf("\tDPAD: DOWN;\n", dpadMSB, dpadLSB);    
+//                   delay(100);
+//                }
+//                break;
+//             case 3:
+//                if (bitChecker)
+//                {
+//                   printf("\tDPAD:  UP;\n", dpadMSB, dpadLSB);    
+//                   delay(100);
+//                }
+//                break;                 
+//          }
+
          
          digitalWrite (column[columnCount], HIGH);
          for ( rowCount = 0; rowCount <= 9; rowCount++ )
@@ -441,7 +467,12 @@ unsigned int get_key(){
                if(keyPadBool[0][0] and keyPadBool[0][1] == 1)
                {
                   //std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 270 . . .\n";
-                  std::cout << "\tKeypad_Driver_V03 -- check 02, 16:13; compile test.\n";
+                  std::cout << "\tKeypad_Driver_V05 -- check 00, 12:19; Check DPAD.\n";
+               }
+               if(keyPadBool[0][0] and keyPadBool[0][2] == 1)
+               {
+                  //std::cout << "\t\t\tKey combination 1 and 58 -- ROTATE 270 . . .\n";
+                  std::cout << "\tKeypad orientation = %d", reportOrientation();
                }
                
             }
@@ -1023,10 +1054,10 @@ int main(int argc, char *argv[])
 //             // std::cout << "\t\t\tattempting to send KEY_B . . .\n";
 //             break;
          case 58:
-            send_event(fd, EV_KEY, KEY_ENTER, 1);
+            send_event(fd, EV_KEY, KEY_KPENTER, 1);
             send_event(fd, EV_SYN, SYN_REPORT, 0);
             delay(debounce);
-            send_event(fd, EV_KEY, KEY_ENTER, 0);
+            send_event(fd, EV_KEY, KEY_KPENTER, 0);
             send_event(fd, EV_SYN, SYN_REPORT, 0);
             // std::cout << "\t\t\tattempting to send KEY_B . . .\n";
             break;
